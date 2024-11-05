@@ -1,3 +1,5 @@
+
+
 #include <ArduinoJson.h>  // Asegúrate de instalar la librería ArduinoJson
 
 /*** Global variables ***/
@@ -7,15 +9,16 @@ int numSemaforos = 0; // Inicializa el número de semáforos
 bool recorridoActivo = false; // Controla si el recorrido está activo
 int semaforoActual = 0; // Indica el semáforo actualmente encendido
 
-int N = 3; 
+const int N = 3;  // Definir N como constante
 
 int sensores[N][2] = {
-  {10,9},
-  {12,11},
-  {3,4}
-}
+  {10, 9},  // TRIG_PIN, ECHO_PIN para el primer sensor
+  {12, 11}, // TRIG_PIN, ECHO_PIN para el segundo sensor
+  {3, 4}    // TRIG_PIN, ECHO_PIN para el tercer sensor
+};
 
-int duracion[N], distancia[N];
+int duracion[N];
+int distancia[N];
 
 void setup() {
     Serial.begin(9600);
@@ -49,7 +52,7 @@ void ControlSensores(){
   for(int i=0; i < N; i++){
     MedirDistancia(i);
     ImprimirDistancia(i);
-    ControlarLed(i);
+  //  ControlarLed(i);
     delay(100);
   }
 }
@@ -93,14 +96,7 @@ void procesarEntrada(String input) {
         recorridoActivo = false;
         apagarSemaforos();
 
-    } else {
-        // Interpretar comandos de encendido manual
-        if (isdigit(input.charAt(0))) {
-            int semaforoId = input.charAt(0) - '0';
-            char color = input.charAt(1);  // Color es el segundo carácter
-            encenderLed(semaforoId, color);
-        }
-    }
+    } 
 }
 
 void configurarSemaforosDesdeJson(String json) {
