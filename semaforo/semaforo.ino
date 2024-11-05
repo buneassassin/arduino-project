@@ -7,6 +7,16 @@ int numSemaforos = 0; // Inicializa el número de semáforos
 bool recorridoActivo = false; // Controla si el recorrido está activo
 int semaforoActual = 0; // Indica el semáforo actualmente encendido
 
+int N = 3; 
+
+int sensores[N][2] = {
+  {10,9},
+  {12,11},
+  {3,4}
+}
+
+int duracion[N], distancia[N];
+
 void setup() {
     Serial.begin(9600);
     for (int i = 0; i < 10; i++) { // Inicializa pines para hasta 10 semáforos
@@ -15,6 +25,11 @@ void setup() {
             digitalWrite(pinSemaforo[i][j], LOW); // Asegura que estén apagados al inicio
         }
     }
+    // Recorrer los arreglos para configurarlos.
+  for(int i = 0; i < N; i++){
+    pinMode(sensores[i][0], OUTPUT);
+    pinMode(sensores[i][1], INPUT);
+  }
 }
 
 void loop() {
@@ -28,6 +43,40 @@ void loop() {
         controlSemaforo(semaforoActual);
         semaforoActual = (semaforoActual + 1) % numSemaforos; // Avanza al siguiente semáforo
     }
+}
+
+void ControlSensores(){
+  for(int i=0; i < N; i++){
+    MedirDistancia(i);
+    ImprimirDistancia(i);
+    ControlarLed(i);
+    delay(100);
+  }
+}
+
+void MedirDistancia(int sensor){
+   // Establecer el TRIG en LOW antes de enviar el pulso.
+  digitalWrite(sensores[sensor][0], LOW);
+  delay(2);
+  // Enviar el pulso de activacion de la señal ultrasonica al pin TRIG
+  digitalWrite(sensores[sensor][0], HIGH);
+  // Mantener el pulso durante un milisegundo.
+  delay(1);
+  // Detener el envio del pulso de la onda ultrasonica.
+  digitalWrite(sensores[sensor][0], LOW);
+  
+  // Medir la duración del pulso en el pin ECHO cuando se recibe la onda reflejada.
+  duracion[sensor] = pulseIn(sensores[sensor][1], HIGH);
+  
+  // Calcular la distancia en centímetros
+  distancia[sensor] = duracion[sensor]/58.2;
+}
+
+void ImprimirDistancia(int sensor){
+  	Serial.print("SON:");
+  	Serial.print(sensor);
+  	Serial.print(":");
+  	Serial.println(distancia[sensor]);
 }
 
 void procesarEntrada(String input) {
