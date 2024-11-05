@@ -32,7 +32,6 @@ void loop() {
 
 void procesarEntrada(String input) {
     if (input.startsWith("CONFIG: ")) {
-        Serial.println("Recibido CONFIG");
         String config = input.substring(8); // Elimina "CONFIG: "
         configurarSemaforosDesdeJson(config);
 
@@ -60,8 +59,6 @@ void configurarSemaforosDesdeJson(String json) {
     DeserializationError error = deserializeJson(doc, json);
 
     if (error) {
-        Serial.print("Error de JSON: ");
-        Serial.println(error.c_str());
         return;
     }
 
@@ -77,33 +74,9 @@ void configurarSemaforosDesdeJson(String json) {
             numSemaforos++;
         }
     }
-
-    // Imprime la configuración para verificar
-    for (int i = 0; i < numSemaforos; i++) {
-        Serial.print("Sem");
-        Serial.print(i);
-        Serial.print(" Pines: R=");
-        Serial.print(pinSemaforo[i][0]);
-        Serial.print(", A=");
-        Serial.print(pinSemaforo[i][1]);
-        Serial.print(", V=");
-        Serial.println(pinSemaforo[i][2]);
-
-    }
-}
-
-void encenderLed(int semaforo, char color) {
-    apagarSemaforos(); // Apaga todos los LEDs antes de encender uno nuevo
-    int colorIndex = (color == 'R') ? 0 : (color == 'A') ? 1 : 2;
-    digitalWrite(pinSemaforo[semaforo][colorIndex], HIGH);
-    Serial.print("OFF:");
-    Serial.print(semaforo);
-    Serial.print(" color ");
-    Serial.println(color);
 }
 
 void apagarSemaforos() {
-    Serial.println("ON ALL...");
     for (int i = 0; i < numSemaforos; i++) {
         for (int j = 0; j < numColores; j++) {
             digitalWrite(pinSemaforo[i][j], LOW);
@@ -116,19 +89,25 @@ void controlSemaforo(int i) {
 
     digitalWrite(pinSemaforo[i][2], HIGH); // Verde
     delay(4000);
+    PrintVerde(i,1);
     digitalWrite(pinSemaforo[i][2], LOW);
+    PrintVerde(i,0);
 
     if (!recorridoActivo) return; // Verificar si el recorrido sigue activo
     parpadeoVerdeAntesDeAmarillo(i);
 
     digitalWrite(pinSemaforo[i][1], HIGH); // Amarillo
     delay(2000);
+    PrintAmarillo(i,1);
     digitalWrite(pinSemaforo[i][1], LOW);
+    PrintAmarillo(i,0);
 
     if (!recorridoActivo) return; // Verificar si el recorrido sigue activo
     digitalWrite(pinSemaforo[i][0], HIGH); // Rojo
     delay(6000);
+    PrintRojo(i,1);
     digitalWrite(pinSemaforo[i][0], LOW);
+    PrintRojo(i,1);
 }
 
 void parpadeoVerdeAntesDeAmarillo(int i) {
@@ -136,7 +115,21 @@ void parpadeoVerdeAntesDeAmarillo(int i) {
         if (!recorridoActivo) break;
         digitalWrite(pinSemaforo[i][2], HIGH);
         delay(250);
+        PrintVerde(i,1);
         digitalWrite(pinSemaforo[i][2], LOW);
         delay(250);
+        PrintVerde(i,0);
     }
 }
+
+ void PrintRojo(int semaforo, int valor){	
+    Serial.println("LER:"+String(semaforo)+":"+String(valor));
+  }
+
+  void PrintVerde(int semaforo, int valor){
+    Serial.println("LEV:"+String(semaforo)+":"+String(valor));
+  }
+
+  void PrintAmarillo(int semaforo, int valor){
+    Serial.println("LEA:"+String(semaforo)+":"+String(valor));
+  }
