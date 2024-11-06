@@ -5,8 +5,7 @@ int pinSemaforo[2][numColores] = {
     {10, 9, 8}    // Pines del segundo semáforo
 };
 int numSemaforos = 2; // Número de semáforos
-bool recorridoActivo = false; // Controla si el recorrido está activo
-int semaforoActual = 0; // Indica el semáforo actualmente encendido
+int semaforoActual = 0; // Variable para alternar entre semáforos
 
 const int N = 2;  // Número de sensores ultrasónicos
 int sensores[N][2] = {
@@ -24,12 +23,16 @@ void setup() {
 }
 
 void loop() {
-    if (Serial.available() > 0) {
-        String input = Serial.readStringUntil('\n'); // Lee entrada
-        procesarEntrada(input);
+      ControlSensores();
+
+    controlarSemaforos();
     }
-    if (recorridoActivo) {
-        controlarSemaforos();
+
+void ControlSensores() {
+    for(int i = 0; i < N; i++) {
+        MedirDistancia(i);
+        ImprimirDistancia(i);
+        delay(100);
     }
 }
 
@@ -51,33 +54,26 @@ void configurarSensores() {
 
 void controlarSemaforos() {
     controlSemaforo(semaforoActual);
-    semaforoActual = (semaforoActual + 1) % numSemaforos; // Cambia al siguiente
+    semaforoActual = (semaforoActual + 1) % numSemaforos; // Alterna entre semáforos
 }
 
-void procesarEntrada(String input) {
-    if (input == "ON") {
-        recorridoActivo = true;
-    } else if (input == "OFF") {
-        recorridoActivo = false;
-        apagarSemaforos();
-    }
-}
-
+// Función para controlar el semáforo
 void controlSemaforo(int i) {
-    if (!recorridoActivo) return;
-    cambiarEstadoSemaforo(i, 2, HIGH, 4000); // Verde
+    // Verde encendido
+    cambiarEstadoSemaforo(i, 2, HIGH, 4000); // Verde ON
+    parpadeoVerdeAntesDeAmarillo(i);  // Parpadeo antes de cambiar a amarillo
+    cambiarEstadoSemaforo(i, 2, LOW, 0);  // Verde OFF
 
-    if (!recorridoActivo) return;
-    parpadeoVerdeAntesDeAmarillo(i);
+    // Amarillo encendido
+    cambiarEstadoSemaforo(i, 1, HIGH, 2000); // Amarillo ON
+    cambiarEstadoSemaforo(i, 1, LOW, 0); // Amarillo OFF
 
-    cambiarEstadoSemaforo(i, 1, HIGH, 2000); // Amarillo
-
-    if (!recorridoActivo) return;
-    cambiarEstadoSemaforo(i, 0, HIGH, 6000); // Rojo
+    // Rojo encendido
+    cambiarEstadoSemaforo(i, 0, HIGH, 6000); // Rojo ON
+    cambiarEstadoSemaforo(i, 0, LOW, 0); // Rojo OFF
 }
-
 void parpadeoVerdeAntesDeAmarillo(int i) {
-    for (int j = 0; j < 3 && recorridoActivo; j++) {
+    for (int j = 0; j < 3 ; j++) {
         cambiarEstadoSemaforo(i, 2, HIGH, 250);
         cambiarEstadoSemaforo(i, 2, LOW, 250);
     }
@@ -94,10 +90,21 @@ void imprimirEstado(int semaforo, int color, int estado) {
     Serial.println(colorCode + ":" + String(semaforo) + ":" + String(estado));
 }
 
-void apagarSemaforos() {
-    for (int i = 0; i < numSemaforos; i++) {
-        for (int j = 0; j < numColores; j++) {
-            digitalWrite(pinSemaforo[i][j], LOW);
-        }
-    }
+
+void MedirDistancia(int sensor) {
+    digitalWrite(sensores[sensor][0], LOW);
+    delay(2);
+    digitalWrite(sensores[sensor][0], HIGH);
+    delay(1);
+    digitalWrite(sensores[sensor][0], LOW);
+
+    duracion[sensor] = pulseIn(sensores[sensor][1], HIGH);
+    distancia[sensor] = duracion[sensor] / 58.2;
+}
+
+void ImprimirDistancia(int sensor) {
+    Serial.print("SON:");
+    Serial.print(sensor);
+    Serial.print(":");
+    Serial.println(distancia[sensor]);
 }
